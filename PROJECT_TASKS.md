@@ -23,3 +23,14 @@
 - [ ] Advanced filters, CSV/accounting export and analytics
 - [ ] Object storage, malware scanning and document retention policy
 - [ ] Accessibility and browser E2E hardening
+
+## Shipaton mobile stages
+
+- [x] Stage 1 code: mobile dashboard, expense list/detail, manual expense entry, existing FastAPI reuse
+- [x] Stage 2 code: receipt camera/library selection, upload, OCR review/edit, explicit confirmation
+- [x] Stage 3 code: RevenueCat SDK configuration, `pro` entitlement gate, paywall, restore purchases, missing-key fallback
+- [ ] Configure RevenueCat products, offering, paywall, and public platform API keys
+- [ ] Implement server-backed monthly Free OCR quota (current OCR flow is not quota-limited)
+- [ ] Implement the actual Pro analytics/export/report features behind the entitlement gate
+- [ ] Validate purchase and restore flows in iOS/Android development builds
+- [ ] Run device-level end-to-end demo and prepare submission video

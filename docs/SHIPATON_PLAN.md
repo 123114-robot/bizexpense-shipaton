@@ -85,3 +85,24 @@ Suggested areas:
 - Testing
 - Documentation
 - Demo / submission
+
+## Current staged delivery
+
+The implementation is intentionally split into stacked branches so each milestone can be reviewed independently:
+
+| Stage | Branch | Included | Verification status |
+| --- | --- | --- | --- |
+| 1 | `feature/mobile-stage-1-core` | Backend API client, dashboard, expense list/detail, manual creation | TypeScript checked |
+| 2 | `feature/mobile-stage-2-receipts` | Camera/library input, upload, OCR extraction, editable confirmation | TypeScript checked; device flow still required |
+| 3 | `feature/mobile-stage-3-revenuecat` | `pro` entitlement, paywall, restore, missing-key fallback, gating tests | Local checks required before PR |
+
+Stages 2 and 3 are based on the preceding stage. Merge them in order or open each PR against its preceding stage branch.
+
+### Remaining teammate work
+
+- RevenueCat dashboard: create products, offering, paywall, and connect them to the `pro` entitlement.
+- Add platform public API keys to local/EAS environment configuration; never commit secret keys.
+- Add a server-backed monthly OCR usage counter before claiming that Free OCR is limited or Pro OCR is unlimited.
+- Build the actual advanced analytics, CSV/PDF export, and business report screens; the current entitlement gate unlocks the Pro area but those features are not yet implemented.
+- Validate camera, upload, purchase, cancellation, entitlement refresh, and restore on iOS/Android development builds.
+- Run backend/frontend regressions, record the demo, and prepare the public submission materials.
