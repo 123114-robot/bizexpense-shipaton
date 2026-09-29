@@ -58,3 +58,13 @@ The current plan is to extend the existing BizExpense MVP with:
 - Unlimited OCR and premium analytics for Pro users
 
 See [docs/SHIPATON_PLAN.md](docs/SHIPATON_PLAN.md) for the detailed project plan.
+
+### Mobile delivery branches
+
+The mobile work is published as stacked, reviewable stages. Review or merge them in order:
+
+1. `feature/mobile-stage-1-core` — FastAPI client, dashboard, expense list/detail, and manual expense creation.
+2. `feature/mobile-stage-2-receipts` — camera/library receipt upload, OCR extraction, editable review, and explicit confirmation.
+3. `feature/mobile-stage-3-revenuecat` — real `pro` entitlement detection, RevenueCat paywall, restore purchases, safe missing-key handling, tests, and team documentation.
+
+The existing web frontend and backend business logic are preserved. See the plan for verified status and remaining work; branch presence does not mean device/store validation is complete.

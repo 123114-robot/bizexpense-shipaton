@@ -7,7 +7,11 @@ import { api, Expense } from '@/lib/api';
 export default function ExpensesScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]); const [selected, setSelected] = useState<Expense>(); const [creating, setCreating] = useState(false); const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => { try { setExpenses(await api.expenses()); } catch (e) { Alert.alert('Could not load expenses', e instanceof Error ? e.message : 'Unknown error'); } finally { setRefreshing(false); } }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // Initial remote data synchronization is intentionally started on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
   return <SafeAreaView style={styles.safe}><View style={styles.header}><View><Text style={styles.title}>Expenses</Text><Text style={styles.subtitle}>{expenses.length} records</Text></View><Pressable style={styles.add} onPress={() => setCreating(true)}><Text style={styles.addText}>+ Add</Text></Pressable></View>
     <FlatList data={expenses} keyExtractor={(item) => String(item.id)} contentContainerStyle={styles.list} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />} ListEmptyComponent={<Text style={styles.empty}>No expenses yet. Add one or scan a receipt.</Text>} renderItem={({ item }) => <Pressable style={styles.card} onPress={() => setSelected(item)}><View><Text style={styles.supplier}>{item.supplier_name}</Text><Text style={styles.meta}>{item.category_name} · {item.invoice_date}</Text></View><Text style={styles.amount}>{item.currency} {Number(item.total_amount).toFixed(2)}</Text></Pressable>} />
     <Modal visible={creating} animationType="slide" onRequestClose={() => setCreating(false)}><ExpenseForm onCancel={() => setCreating(false)} onSaved={() => { setCreating(false); load(); }} /></Modal>

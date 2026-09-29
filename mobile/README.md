@@ -1,4 +1,14 @@
-# Welcome to your Expo app 👋
+# BizExpense Mobile
+
+Expo client for the existing BizExpense FastAPI backend, with receipt OCR review and RevenueCat-powered Pro access.
+
+## Setup
+
+1. Copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL` to a URL reachable from the device (Android emulator usually uses `http://10.0.2.2:8000/api`).
+2. Add the RevenueCat public platform API key(s). The app remains usable in Free mode when keys are omitted.
+3. Start the backend, then run `npm install` and `npm start` in this directory.
+
+RevenueCat uses the `pro` entitlement. Purchases require an Expo development build; Expo Go can be used for UI preview but does not provide a production purchase environment.
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
