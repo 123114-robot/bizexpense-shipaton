@@ -44,3 +44,17 @@ cd ../frontend; npm test; npm run build; npm run lint
 ```
 
 See [docs/project-overview.md](docs/project-overview.md), [PROJECT_TASKS.md](PROJECT_TASKS.md), and the remaining `docs/` files for design decisions and future phases.
+
+## Shipaton 2026
+
+This repository is being adapted for RevenueCat Shipaton 2026.
+
+The current plan is to extend the existing BizExpense MVP with:
+
+- React Native / Expo mobile app
+- RevenueCat Free / Pro subscriptions
+- Paywall and entitlement checks
+- Limited OCR for Free users
+- Unlimited OCR and premium analytics for Pro users
+
+See [docs/SHIPATON_PLAN.md](docs/SHIPATON_PLAN.md) for the detailed project plan.
