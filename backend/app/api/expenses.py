@@ -1,4 +1,7 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -18,6 +21,24 @@ def create_expense(payload: ExpenseCreate, db: Session = Depends(get_db)):
     return ExpenseService(db).create(payload)
 
 
+@router.get("/export")
+def export_expenses_csv(
+    start_date: date | None = None,
+    end_date: date | None = None,
+    category_id: int | None = None,
+    db: Session = Depends(get_db),
+):
+    """Download all (optionally filtered) expenses as a CSV file."""
+    csv_content = ExpenseService(db).export_csv(start_date, end_date, category_id)
+    filename = "bizexpense_export.csv"
+    headers = {"Content-Disposition": f"attachment; filename={filename}"}
+    return StreamingResponse(
+        iter([csv_content]),
+        media_type="text/csv; charset=utf-8",
+        headers=headers,
+    )
+
+
 @router.get("/{expense_id}", response_model=ExpenseRead)
 def get_expense(expense_id: int, db: Session = Depends(get_db)):
     return ExpenseService(db).get(expense_id)
@@ -32,4 +53,3 @@ def update_expense(expense_id: int, payload: ExpenseUpdate, db: Session = Depend
 def delete_expense(expense_id: int, db: Session = Depends(get_db)):
     ExpenseService(db).delete(expense_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
