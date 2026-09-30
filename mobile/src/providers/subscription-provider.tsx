@@ -4,8 +4,9 @@ import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
 import RevenueCatUI from 'react-native-purchases-ui';
 
 import { hasProEntitlement, PRO_ENTITLEMENT, revenueCatKeyForPlatform } from '@/lib/entitlements';
+import { subscriptionIdentityMode, SubscriptionIdentityMode } from '@/lib/subscription-identity';
 
-type Value = { configured: boolean; isPro: boolean; loading: boolean; message: string | null; showPaywall: () => Promise<void>; restore: () => Promise<void> };
+type Value = { configured: boolean; isPro: boolean; loading: boolean; message: string | null; appUserId: string | null; identityMode: SubscriptionIdentityMode; showPaywall: () => Promise<void>; restore: () => Promise<void> };
 const Context = createContext<Value | null>(null);
 const apiKey = revenueCatKeyForPlatform(Platform.OS, {
   ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
@@ -17,9 +18,20 @@ export function SubscriptionProvider({ children }: PropsWithChildren) {
   const [info, setInfo] = useState<CustomerInfo>();
   const [loading, setLoading] = useState(Boolean(apiKey));
   const [message, setMessage] = useState<string | null>(null);
+  const [appUserId, setAppUserId] = useState<string | null>(null);
+  const [anonymous, setAnonymous] = useState<boolean>();
   const refresh = useCallback(async () => {
     if (!apiKey) return;
-    try { setInfo(await Purchases.getCustomerInfo()); }
+    try {
+      const [customerInfo, currentAppUserId, isAnonymous] = await Promise.all([
+        Purchases.getCustomerInfo(),
+        Purchases.getAppUserID(),
+        Purchases.isAnonymous(),
+      ]);
+      setInfo(customerInfo);
+      setAppUserId(currentAppUserId);
+      setAnonymous(isAnonymous);
+    }
     catch (error) { setMessage(error instanceof Error ? error.message : 'Could not load subscription.'); }
     finally { setLoading(false); }
   }, []);
@@ -51,7 +63,7 @@ export function SubscriptionProvider({ children }: PropsWithChildren) {
     finally { setLoading(false); }
   }, []);
 
-  const value = useMemo(() => ({ configured: Boolean(apiKey), isPro: hasProEntitlement(info?.entitlements.active), loading, message, showPaywall, restore }), [info, loading, message, restore, showPaywall]);
+  const value = useMemo(() => ({ configured: Boolean(apiKey), isPro: hasProEntitlement(info?.entitlements.active), loading, message, appUserId, identityMode: subscriptionIdentityMode(Boolean(apiKey), anonymous), showPaywall, restore }), [anonymous, appUserId, info, loading, message, restore, showPaywall]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 
