@@ -34,3 +34,5 @@
 - [ ] Implement the actual Pro analytics/export/report features behind the entitlement gate
 - [ ] Validate purchase and restore flows in iOS/Android development builds
 - [ ] Run device-level end-to-end demo and prepare submission video
+- [x] Stage 4A local repository setup: EAS build profiles, app identity, configuration check, and handoff record
+- [ ] Stage 4A account verification: link EAS project, confirm platform identifiers, configure RevenueCat dashboard, and complete a development build
