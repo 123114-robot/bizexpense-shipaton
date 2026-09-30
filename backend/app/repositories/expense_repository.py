@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
@@ -14,6 +16,25 @@ class ExpenseRepository:
             statement = statement.join(Expense.supplier).where(
                 Expense.description.ilike(f"%{search}%") | Expense.supplier.has(name=search)
             )
+        return list(self.db.scalars(statement).all())
+
+    def list_for_export(
+        self,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        category_id: int | None = None,
+    ) -> list[Expense]:
+        statement = (
+            select(Expense)
+            .options(joinedload(Expense.supplier), joinedload(Expense.category))
+            .order_by(Expense.invoice_date.desc())
+        )
+        if start_date is not None:
+            statement = statement.where(Expense.invoice_date >= start_date)
+        if end_date is not None:
+            statement = statement.where(Expense.invoice_date <= end_date)
+        if category_id is not None:
+            statement = statement.where(Expense.category_id == category_id)
         return list(self.db.scalars(statement).all())
 
     def get(self, expense_id: int) -> Expense | None:

@@ -1,3 +1,7 @@
+import csv
+import io
+from datetime import date
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,6 +12,20 @@ from app.models.supplier import Supplier
 from app.models.user import User
 from app.repositories.expense_repository import ExpenseRepository
 from app.schemas.expense import ExpenseCreate, ExpenseRead
+
+_CSV_HEADERS = [
+    "Date",
+    "Supplier",
+    "ABN",
+    "Invoice Number",
+    "Category",
+    "Description",
+    "Subtotal (AUD)",
+    "GST (AUD)",
+    "Total (AUD)",
+    "Currency",
+    "OCR Confirmed",
+]
 
 
 class ExpenseService:
@@ -67,4 +85,29 @@ class ExpenseService:
             raise HTTPException(404, "Expense not found")
         self.repo.delete(expense)
 
-    # TODO: add non-blocking duplicate warning based on supplier + invoice_number + total_amount.
+    def export_csv(
+        self,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        category_id: int | None = None,
+    ) -> str:
+        """Return a UTF-8 CSV string of expenses filtered by the given criteria."""
+        expenses = self.repo.list_for_export(start_date, end_date, category_id)
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(_CSV_HEADERS)
+        for expense in expenses:
+            writer.writerow([
+                expense.invoice_date,
+                expense.supplier.name,
+                expense.supplier.abn or "",
+                expense.invoice_number or "",
+                expense.category.name,
+                expense.description,
+                expense.subtotal,
+                expense.gst_amount,
+                expense.total_amount,
+                expense.currency,
+                "Yes" if expense.ocr_confirmed else "No",
+            ])
+        return buffer.getvalue()
