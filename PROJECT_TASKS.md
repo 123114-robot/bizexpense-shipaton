@@ -40,3 +40,5 @@
 - [ ] Stage 4B production identity: add backend authentication, custom App User IDs, account recovery, and cross-device verification
 - [x] Stage 4C mobile quota UX: adapter, unavailable/loading/usage states, 429 handling, and upgrade prompt
 - [ ] Stage 4C shared dependency: authenticated server quota API and server-verified Pro access from main BizExpense
+- [x] Stage 4D mobile offline UX: connectivity banner, guarded receipt actions, and focused tests
+- [ ] Future offline queue: wait for upload idempotency/resume contract from main BizExpense
