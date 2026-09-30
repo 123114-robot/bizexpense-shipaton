@@ -26,6 +26,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow BizExpense Mobile to select receipt images for expense processing.",
+          "cameraPermission": "Allow BizExpense Mobile to take receipt photos for expense processing.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
