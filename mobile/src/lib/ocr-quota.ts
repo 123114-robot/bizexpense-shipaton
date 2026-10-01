@@ -15,5 +15,5 @@ export async function loadOcrQuota(loader: () => Promise<OCRUsageResponse>): Pro
 }
 
 export function isQuotaExceeded(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 429;
+  return (error instanceof ApiError || (typeof error === 'object' && error !== null && 'status' in error)) && (error as { status: number }).status === 429;
 }
