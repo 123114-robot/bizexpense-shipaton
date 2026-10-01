@@ -8,6 +8,8 @@ Expo client for the existing BizExpense FastAPI backend, with receipt OCR review
 2. Add the RevenueCat public platform API key(s). The app remains usable in Free mode when keys are omitted.
 3. Start the backend, then run `npm install` and `npm start` in this directory.
 
+When demo mode is disabled, the app uses the shared BizExpense `/auth/register`, `/auth/login`, and `/auth/me` endpoints. JWTs are stored with Expo SecureStore on native devices and attached to every API request. Web previews use browser local storage.
+
 RevenueCat uses the `pro` entitlement. Purchases require an Expo development build; Expo Go can be used for UI preview but does not provide a production purchase environment.
 
 ## Standalone demo
