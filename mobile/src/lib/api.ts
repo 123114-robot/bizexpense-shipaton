@@ -1,4 +1,5 @@
 import { createDemoApi } from './demo-api';
+import { announceUnauthorized, getAccessToken, setAccessToken } from './session-token';
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
 export const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
@@ -17,9 +18,19 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, init);
-  if (!response.ok) throw new ApiError(response.status, (await response.text()) || `Request failed (${response.status})`);
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  const token = getAccessToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const response = await fetch(`${API_URL}${path}`, { ...init, headers });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({})) as { detail?: string };
+    if (response.status === 401) {
+      setAccessToken(null);
+      announceUnauthorized();
+    }
+    throw new ApiError(response.status, body.detail || `Request failed (${response.status})`);
+  }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
@@ -39,3 +50,11 @@ const remoteApi = {
 };
 
 export const api = DEMO_MODE ? createDemoApi() : remoteApi;
+
+export type AuthUser = { id: number; name: string; email: string; role: string };
+export type AuthResponse = { access_token: string; token_type: string; user: AuthUser };
+export const authApi = {
+  login: (email: string, password: string) => request<AuthResponse>('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }),
+  register: (name: string, email: string, password: string) => request<AuthResponse>('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) }),
+  me: () => request<AuthUser>('/auth/me'),
+};
