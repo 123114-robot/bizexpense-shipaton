@@ -10,6 +10,17 @@ Expo client for the existing BizExpense FastAPI backend, with receipt OCR review
 
 RevenueCat uses the `pro` entitlement. Purchases require an Expo development build; Expo Go can be used for UI preview but does not provide a production purchase environment.
 
+## Development builds
+
+Run `npm run config:check` before creating a build. EAS profiles are defined in `eas.json`:
+
+- `development`: internal development client for physical devices
+- `ios-simulator`: development client for the iOS Simulator
+- `preview`: internal production-like team build
+- `production`: store build with automatic build-number incrementing
+
+The repository intentionally does not set `ios.bundleIdentifier`, `android.package`, an EAS project ID, or RevenueCat dashboard values. Confirm ownership with the team, link the intended Expo account, and then configure these values. See `docs/stages/STAGE_4A_DEVELOPMENT_BUILD.md` for the checklist.
+
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started

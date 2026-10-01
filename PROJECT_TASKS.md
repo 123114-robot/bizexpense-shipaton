@@ -34,3 +34,7 @@
 - [ ] Implement the actual Pro analytics/export/report features behind the entitlement gate
 - [ ] Validate purchase and restore flows in iOS/Android development builds
 - [ ] Run device-level end-to-end demo and prepare submission video
+- [x] Stage 4A local repository setup: EAS build profiles, app identity, configuration check, and handoff record
+- [ ] Stage 4A account verification: link EAS project, confirm platform identifiers, configure RevenueCat dashboard, and complete a development build
+- [x] Stage 4B local MVP identity: expose RevenueCat anonymous identity and support ID with documented migration boundaries
+- [ ] Stage 4B production identity: add backend authentication, custom App User IDs, account recovery, and cross-device verification
