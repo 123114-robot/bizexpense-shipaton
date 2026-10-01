@@ -47,7 +47,9 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "vitest run",
-    "config:check": "node ./scripts/check-config.mjs"
+    "config:check": "node ./scripts/check-config.mjs",
+    "validate": "npm run config:check && tsc --noEmit && npm test && npm run lint",
+    "export:web": "expo export --platform web"
   },
   "private": true
 }

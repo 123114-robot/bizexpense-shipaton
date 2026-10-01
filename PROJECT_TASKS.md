@@ -42,3 +42,5 @@
 - [ ] Stage 4C shared dependency: authenticated server quota API and server-verified Pro access from main BizExpense
 - [x] Stage 4D mobile offline UX: connectivity banner, guarded receipt actions, and focused tests
 - [ ] Future offline queue: wait for upload idempotency/resume contract from main BizExpense
+- [x] Stage 4E local packaging readiness: permission copy, unified validation, and static export smoke test
+- [ ] Native packaging verification: EAS account, platform identifiers, signing, and physical-device checks
