@@ -17,7 +17,7 @@ export function ExpenseForm({ documentId, ocr, onSaved, onCancel }: Props) {
   useEffect(() => { api.categories().then((rows) => { setCategories(rows); if (rows[0]) setCategoryId(rows[0].id); }).catch((e) => Alert.alert('Categories unavailable', e.message)); }, []);
 
   async function save() {
-    const payload: ExpenseInput = { supplier_name: supplier.trim(), category_id: categoryId, document_id: documentId ?? null, invoice_number: ocr?.invoice_number ?? null, invoice_date: date, due_date: ocr?.due_date ?? null, subtotal: Number(subtotal), gst_amount: Number(gst), total_amount: Number(total), currency: ocr?.currency ?? 'AUD', description: description.trim(), ocr_confidence: ocr?.confidence ?? null, ocr_confirmed: Boolean(ocr) };
+    const payload: ExpenseInput = { supplier_name: supplier.trim(), category_id: categoryId, document_id: documentId ?? null, invoice_number: ocr?.invoice_number ?? null, invoice_date: date, due_date: ocr?.due_date ?? null, subtotal: Number(subtotal), gst_amount: Number(gst), total_amount: Number(total), currency: ocr?.currency ?? 'AUD', description: description.trim(), ocr_confidence: ocr?.confidence ?? null, ocr_confirmed: true };
     if (!payload.supplier_name || !payload.description || [payload.subtotal, payload.gst_amount, payload.total_amount].some(Number.isNaN)) { Alert.alert('Check the form', 'Supplier, description and valid amounts are required.'); return; }
     try { setSaving(true); await api.createExpense(payload); onSaved(); }
     catch (error) { Alert.alert('Could not save', error instanceof Error ? error.message : 'Unknown error'); }

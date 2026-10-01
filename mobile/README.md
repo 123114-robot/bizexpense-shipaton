@@ -10,6 +10,10 @@ Expo client for the existing BizExpense FastAPI backend, with receipt OCR review
 
 RevenueCat uses the `pro` entitlement. Purchases require an Expo development build; Expo Go can be used for UI preview but does not provide a production purchase environment.
 
+## Standalone demo
+
+For a backend-free prototype, set `EXPO_PUBLIC_DEMO_MODE=true` in `mobile/.env`, then run `npm start`. Demo mode provides session-only sample dashboard data, manual expense creation, mock receipt OCR, and an OCR allowance. It is visibly labelled and resets when the app restarts.
+
 ## Development builds
 
 Run `npm run config:check` before creating a build. EAS profiles are defined in `eas.json`:

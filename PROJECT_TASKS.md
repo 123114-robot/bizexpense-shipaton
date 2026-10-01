@@ -44,3 +44,4 @@
 - [ ] Future offline queue: wait for upload idempotency/resume contract from main BizExpense
 - [x] Stage 4E local packaging readiness: permission copy, unified validation, and static export smoke test
 - [ ] Native packaging verification: EAS account, platform identifiers, signing, and physical-device checks
+- [x] Stage 4F standalone prototype: in-memory dashboard, expenses, OCR review, and quota demo adapter

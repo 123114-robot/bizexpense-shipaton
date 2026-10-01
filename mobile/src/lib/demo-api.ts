@@ -1,0 +1,44 @@
+import type { Category, DashboardSummary, Expense, ExpenseInput, OCRResult, OCRUsageResponse } from './api';
+
+const categories: Category[] = [
+  { id: 1, name: 'Office Supplies' },
+  { id: 2, name: 'Travel' },
+  { id: 3, name: 'Software' },
+  { id: 4, name: 'Meals' },
+];
+
+const initialExpenses: Expense[] = [
+  { id: 1, supplier_name: 'Acme Office Supplies', category_id: 1, category_name: 'Office Supplies', document_id: 1, invoice_number: 'INV-204', invoice_date: '2026-09-28', due_date: null, subtotal: 100, gst_amount: 10, total_amount: 110, currency: 'AUD', description: 'Printer supplies', ocr_confidence: 0.92, ocr_confirmed: true },
+  { id: 2, supplier_name: 'Cloud Tools', category_id: 3, category_name: 'Software', document_id: null, invoice_number: 'SUB-0926', invoice_date: '2026-09-24', due_date: null, subtotal: 45, gst_amount: 4.5, total_amount: 49.5, currency: 'AUD', description: 'Monthly software subscription', ocr_confidence: null, ocr_confirmed: true },
+];
+
+export function createDemoApi() {
+  let expenses = initialExpenses.map((expense) => ({ ...expense }));
+  let nextExpenseId = 3;
+  let nextDocumentId = 10;
+  let ocrUsed = 2;
+  const ocrLimit = 5;
+
+  return {
+    async dashboard(): Promise<DashboardSummary> {
+      const total = expenses.reduce((sum, expense) => sum + Number(expense.total_amount), 0);
+      const gst = expenses.reduce((sum, expense) => sum + Number(expense.gst_amount), 0);
+      return { total_expenses: total.toFixed(2), expenses_this_month: total.toFixed(2), gst_paid: gst.toFixed(2), expense_count: expenses.length };
+    },
+    async expenses(): Promise<Expense[]> { return expenses.map((expense) => ({ ...expense })); },
+    async categories(): Promise<Category[]> { return categories.map((category) => ({ ...category })); },
+    async createExpense(payload: ExpenseInput): Promise<Expense> {
+      const category = categories.find((item) => item.id === payload.category_id) ?? categories[0];
+      const expense: Expense = { ...payload, id: nextExpenseId++, category_name: category.name };
+      expenses = [expense, ...expenses];
+      return { ...expense };
+    },
+    async uploadReceipt(): Promise<{ id: number }> { return { id: nextDocumentId++ }; },
+    async extractReceipt(): Promise<OCRResult> {
+      if (ocrUsed >= ocrLimit) throw Object.assign(new Error('Monthly OCR limit reached'), { status: 429 });
+      ocrUsed += 1;
+      return { supplier_name: 'Harbour Café', abn: '12 345 678 901', invoice_number: 'DEMO-302', invoice_date: new Date().toISOString().slice(0, 10), due_date: null, subtotal: 27.18, gst: 2.72, total: 29.9, currency: 'AUD', confidence: 0.94, confirmed: false };
+    },
+    async ocrUsage(): Promise<OCRUsageResponse> { return { used: ocrUsed, limit: ocrLimit, remaining: Math.max(0, ocrLimit - ocrUsed) }; },
+  };
+}

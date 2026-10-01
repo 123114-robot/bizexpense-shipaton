@@ -1,4 +1,7 @@
+import { createDemoApi } from './demo-api';
+
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
+export const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
 
 export type DashboardSummary = { total_expenses: string; expenses_this_month: string; gst_paid: string; expense_count: number };
 export type Category = { id: number; name: string };
@@ -21,7 +24,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export const api = {
+const remoteApi = {
   dashboard: () => request<DashboardSummary>('/dashboard/summary'),
   expenses: () => request<Expense[]>('/expenses'),
   categories: () => request<Category[]>('/categories'),
@@ -34,3 +37,5 @@ export const api = {
   extractReceipt: (id: number) => request<OCRResult>(`/documents/${id}/extract`, { method: 'POST' }),
   ocrUsage: () => request<OCRUsageResponse>('/documents/ocr-usage'),
 };
+
+export const api = DEMO_MODE ? createDemoApi() : remoteApi;
