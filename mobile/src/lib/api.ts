@@ -58,3 +58,7 @@ export const authApi = {
   register: (name: string, email: string, password: string) => request<AuthResponse>('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) }),
   me: () => request<AuthUser>('/auth/me'),
 };
+
+export const systemApi = {
+  health: () => request<{ status: string }>('/health'),
+};
