@@ -14,18 +14,21 @@ try {
             -RedirectStandardOutput (Join-Path $PSScriptRoot 'server-output.log') `
             -RedirectStandardError (Join-Path $PSScriptRoot 'server-error.log')
 
+        # The first Expo Web request performs the initial Metro bundle. Give that
+        # request time to finish instead of repeatedly cancelling it and starting
+        # overlapping bundles.
         $ready = $false
-        for ($attempt = 0; $attempt -lt 90; $attempt++) {
-            Start-Sleep -Seconds 1
+        for ($attempt = 0; $attempt -lt 3; $attempt++) {
+            Start-Sleep -Seconds 2
             try {
-                Invoke-WebRequest -UseBasicParsing 'http://127.0.0.1:8081' -TimeoutSec 2 | Out-Null
+                Invoke-WebRequest -UseBasicParsing 'http://127.0.0.1:8081' -TimeoutSec 180 | Out-Null
                 $ready = $true
                 break
             } catch {
                 if ($serverProcess.HasExited) { throw 'Expo Web stopped before becoming ready.' }
             }
         }
-        if (-not $ready) { throw 'Expo Web did not become ready within 90 seconds.' }
+        if (-not $ready) { throw 'Expo Web did not become ready after three full bundle attempts.' }
     }
 
     Push-Location $PSScriptRoot
