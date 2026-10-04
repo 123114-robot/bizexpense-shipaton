@@ -1,4 +1,5 @@
 import type { Category, DashboardSummary, Expense, ExpenseInput, OCRResult, OCRUsageResponse } from './api';
+import type { ExpenseFilterState } from './expense-filters';
 
 const categories: Category[] = [
   { id: 1, name: 'Office Supplies' },
@@ -36,7 +37,14 @@ export function createDemoApi() {
         ],
       };
     },
-    async expenses(): Promise<Expense[]> { return expenses.map((expense) => ({ ...expense })); },
+    async expenses(filters?: ExpenseFilterState): Promise<Expense[]> {
+      const search = filters?.search.trim().toLowerCase();
+      return expenses.filter((expense) => {
+        const matchesSearch = !search || `${expense.supplier_name} ${expense.description}`.toLowerCase().includes(search);
+        const matchesStatus = !filters || filters.ocr_confirmed === 'all' || expense.ocr_confirmed === (filters.ocr_confirmed === 'confirmed');
+        return matchesSearch && matchesStatus;
+      }).map((expense) => ({ ...expense }));
+    },
     async categories(): Promise<Category[]> { return categories.map((category) => ({ ...category })); },
     async createExpense(payload: ExpenseInput): Promise<Expense> {
       const category = categories.find((item) => item.id === payload.category_id) ?? categories[0];

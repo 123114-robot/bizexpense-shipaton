@@ -1,5 +1,6 @@
 import { createDemoApi } from './demo-api';
 import { announceUnauthorized, getAccessToken, setAccessToken } from './session-token';
+import { buildExpenseQuery, ExpenseFilterState } from './expense-filters';
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
 export const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
@@ -44,7 +45,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 const remoteApi = {
   dashboard: () => request<DashboardSummary>('/dashboard/summary'),
-  expenses: () => request<Expense[]>('/expenses'),
+  expenses: (filters?: ExpenseFilterState) => request<Expense[]>(`/expenses${buildExpenseQuery(filters)}`),
   categories: () => request<Category[]>('/categories'),
   createExpense: (payload: ExpenseInput) => request<Expense>('/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   uploadReceipt: (asset: { uri: string; fileName?: string | null; mimeType?: string | null }) => {
