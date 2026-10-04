@@ -23,7 +23,18 @@ export function createDemoApi() {
     async dashboard(): Promise<DashboardSummary> {
       const total = expenses.reduce((sum, expense) => sum + Number(expense.total_amount), 0);
       const gst = expenses.reduce((sum, expense) => sum + Number(expense.gst_amount), 0);
-      return { total_expenses: total.toFixed(2), expenses_this_month: total.toFixed(2), gst_paid: gst.toFixed(2), expense_count: expenses.length };
+      const categoryBreakdown = categories.map((category) => {
+        const rows = expenses.filter((expense) => expense.category_id === category.id);
+        return { category: category.name, total: rows.reduce((sum, expense) => sum + Number(expense.total_amount), 0).toFixed(2), expense_count: rows.length };
+      }).filter((item) => item.expense_count > 0);
+      return {
+        total_expenses: total.toFixed(2), expenses_this_month: total.toFixed(2), gst_paid: gst.toFixed(2), expense_count: expenses.length,
+        category_breakdown: categoryBreakdown,
+        monthly_trend: [
+          { month: '2026-05', total: '0.00' }, { month: '2026-06', total: '34.00' }, { month: '2026-07', total: '72.50' },
+          { month: '2026-08', total: '46.20' }, { month: '2026-09', total: total.toFixed(2) }, { month: '2026-10', total: total.toFixed(2) },
+        ],
+      };
     },
     async expenses(): Promise<Expense[]> { return expenses.map((expense) => ({ ...expense })); },
     async categories(): Promise<Category[]> { return categories.map((category) => ({ ...category })); },
