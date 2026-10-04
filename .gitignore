@@ -13,3 +13,8 @@ frontend/dist/
 outputs/
 work/
 .env
+demo/node_modules/
+demo/test-results/
+demo/recordings/
+demo/server-output.log
+demo/server-error.log
