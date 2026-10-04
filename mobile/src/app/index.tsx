@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView,
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ExpenseForm } from '@/components/expense-form';
+import { ProAnalytics } from '@/components/pro-analytics';
 import { api, DashboardSummary, DEMO_MODE, OCRResult } from '@/lib/api';
 import { isOffline } from '@/lib/connectivity';
 import { isQuotaExceeded, loadOcrQuota, OCRQuotaState } from '@/lib/ocr-quota';
@@ -71,6 +72,7 @@ export default function DashboardScreen() {
     <Text style={styles.section}>Add a receipt</Text><View style={styles.row}><Action title="Take photo" disabled={uploadBlocked} onPress={() => choose('camera')} /><Action title="Choose image" disabled={uploadBlocked} onPress={() => choose('library')} /></View>
     {processing && <View style={styles.processing}><ActivityIndicator /><Text>Uploading and extracting receipt…</Text></View>}
     <QuotaCard quota={quota} proDetected={subscription.isPro} onUpgrade={subscription.showPaywall} />
+    {subscription.isPro && summary && <ProAnalytics summary={summary} />}
     <View style={styles.proCard}><Text style={styles.proTitle}>Advanced reports · Pro</Text><Text style={styles.proCopy}>{subscription.isPro ? 'Your Pro entitlement is active. Advanced reporting is unlocked.' : 'Upgrade through RevenueCat to unlock analytics and export features.'}</Text>{!subscription.isPro && <Action title="View Pro paywall" onPress={subscription.showPaywall} />}<Pressable onPress={subscription.restore}><Text style={styles.restore}>Restore purchases</Text></Pressable><View style={styles.identity}><Text style={styles.identityLabel}>Subscription identity · {subscription.identityMode}</Text><Text selectable style={styles.supportId}>{supportIdLabel(subscription.appUserId)}</Text></View>{subscription.message && <Text style={styles.message}>{subscription.message}</Text>}</View>
   </ScrollView><Modal visible={Boolean(receipt)} animationType="slide" onRequestClose={() => setReceipt(undefined)}>{receipt && <ExpenseForm documentId={receipt.documentId} ocr={receipt.ocr} onCancel={() => setReceipt(undefined)} onSaved={() => { setReceipt(undefined); load(); Alert.alert('Expense confirmed'); }} />}</Modal></SafeAreaView>;
 }

@@ -4,7 +4,14 @@ import { announceUnauthorized, getAccessToken, setAccessToken } from './session-
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
 export const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
 
-export type DashboardSummary = { total_expenses: string; expenses_this_month: string; gst_paid: string; expense_count: number };
+export type DashboardSummary = {
+  total_expenses: string;
+  expenses_this_month: string;
+  gst_paid: string;
+  expense_count: number;
+  category_breakdown: { category: string; total: string; expense_count: number }[];
+  monthly_trend: { month: string; total: string }[];
+};
 export type Category = { id: number; name: string };
 export type Expense = { id: number; supplier_name: string; category_id: number; category_name: string; document_id: number | null; invoice_number: string | null; invoice_date: string; due_date: string | null; subtotal: number; gst_amount: number; total_amount: number; currency: string; description: string; ocr_confidence: number | null; ocr_confirmed: boolean };
 export type ExpenseInput = Omit<Expense, 'id' | 'category_name'>;

@@ -31,7 +31,8 @@
 - [x] Stage 3 code: RevenueCat SDK configuration, `pro` entitlement gate, paywall, restore purchases, missing-key fallback
 - [ ] Configure RevenueCat products, offering, paywall, and public platform API keys
 - [ ] Implement server-backed monthly Free OCR quota (current OCR flow is not quota-limited)
-- [ ] Implement the actual Pro analytics/export/report features behind the entitlement gate
+- [x] Implement RevenueCat-gated mobile category analytics and six-month trend
+- [ ] Implement remaining Pro CSV/PDF export and business report features
 - [ ] Validate purchase and restore flows in iOS/Android development builds
 - [ ] Run device-level end-to-end demo and prepare submission video
 - [x] Stage 4A local repository setup: EAS build profiles, app identity, configuration check, and handoff record
