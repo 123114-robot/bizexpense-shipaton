@@ -42,7 +42,10 @@ export function createDemoApi() {
       return expenses.filter((expense) => {
         const matchesSearch = !search || `${expense.supplier_name} ${expense.description}`.toLowerCase().includes(search);
         const matchesStatus = !filters || filters.ocr_confirmed === 'all' || expense.ocr_confirmed === (filters.ocr_confirmed === 'confirmed');
-        return matchesSearch && matchesStatus;
+        const matchesCategory = !filters?.category_id || expense.category_id === filters.category_id;
+        const matchesStart = !filters?.date_from || expense.invoice_date >= filters.date_from;
+        const matchesEnd = !filters?.date_to || expense.invoice_date <= filters.date_to;
+        return matchesSearch && matchesStatus && matchesCategory && matchesStart && matchesEnd;
       }).map((expense) => ({ ...expense }));
     },
     async categories(): Promise<Category[]> { return categories.map((category) => ({ ...category })); },
