@@ -17,4 +17,16 @@ describe('standalone mobile demo API', () => {
     expect((await api.extractReceipt()).supplier_name).toBe('Harbour Café');
     expect((await api.ocrUsage()).used).toBe(3);
   });
+
+  it('updates and deletes an existing expense', async () => {
+    const api = createDemoApi();
+    const existing = (await api.expenses())[0];
+    const updated = await api.updateExpense(existing.id, { ...existing, description: 'Updated printer supplies' });
+    expect(updated.description).toBe('Updated printer supplies');
+    expect((await api.expenses())[0].description).toBe('Updated printer supplies');
+
+    await api.deleteExpense(existing.id);
+    expect((await api.expenses()).some((expense) => expense.id === existing.id)).toBe(false);
+    expect((await api.dashboard()).expense_count).toBe(1);
+  });
 });

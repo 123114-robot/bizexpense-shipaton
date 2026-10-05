@@ -52,6 +52,17 @@ export function createDemoApi() {
       expenses = [expense, ...expenses];
       return { ...expense };
     },
+    async updateExpense(id: number, payload: ExpenseInput): Promise<Expense> {
+      const index = expenses.findIndex((expense) => expense.id === id);
+      if (index < 0) throw Object.assign(new Error('Expense not found'), { status: 404 });
+      const category = categories.find((item) => item.id === payload.category_id) ?? categories[0];
+      const updated: Expense = { ...payload, id, category_name: category.name };
+      expenses[index] = updated;
+      return { ...updated };
+    },
+    async deleteExpense(id: number): Promise<void> {
+      expenses = expenses.filter((expense) => expense.id !== id);
+    },
     async uploadReceipt(): Promise<{ id: number }> { return { id: nextDocumentId++ }; },
     async extractReceipt(): Promise<OCRResult> {
       if (ocrUsed >= ocrLimit) throw Object.assign(new Error('Monthly OCR limit reached'), { status: 429 });

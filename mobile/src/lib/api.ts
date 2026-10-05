@@ -48,6 +48,8 @@ const remoteApi = {
   expenses: (filters?: ExpenseFilterState) => request<Expense[]>(`/expenses${buildExpenseQuery(filters)}`),
   categories: () => request<Category[]>('/categories'),
   createExpense: (payload: ExpenseInput) => request<Expense>('/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  updateExpense: (id: number, payload: ExpenseInput) => request<Expense>(`/expenses/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  deleteExpense: (id: number) => request<void>(`/expenses/${id}`, { method: 'DELETE' }),
   uploadReceipt: (asset: { uri: string; fileName?: string | null; mimeType?: string | null }) => {
     const body = new FormData();
     body.append('file', { uri: asset.uri, name: asset.fileName ?? 'receipt.jpg', type: asset.mimeType ?? 'image/jpeg' } as never);
