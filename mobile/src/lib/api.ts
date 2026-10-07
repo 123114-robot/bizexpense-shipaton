@@ -27,6 +27,12 @@ export class ApiError extends Error {
 }
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await requestResponse(path, init);
+  if (response.status === 204) return undefined as T;
+  return response.json() as Promise<T>;
+}
+
+async function requestResponse(path: string, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers);
   const token = getAccessToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -39,8 +45,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(response.status, body.detail || `Request failed (${response.status})`);
   }
-  if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
+  return response;
 }
 
 const remoteApi = {
@@ -50,6 +55,7 @@ const remoteApi = {
   createExpense: (payload: ExpenseInput) => request<Expense>('/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   updateExpense: (id: number, payload: ExpenseInput) => request<Expense>(`/expenses/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   deleteExpense: (id: number) => request<void>(`/expenses/${id}`, { method: 'DELETE' }),
+  exportExpenses: async () => (await requestResponse('/expenses/export.csv')).text(),
   uploadReceipt: (asset: { uri: string; fileName?: string | null; mimeType?: string | null }) => {
     const body = new FormData();
     body.append('file', { uri: asset.uri, name: asset.fileName ?? 'receipt.jpg', type: asset.mimeType ?? 'image/jpeg' } as never);

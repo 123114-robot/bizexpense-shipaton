@@ -10,6 +10,7 @@ import { api, DashboardSummary, DEMO_MODE, OCRResult } from '@/lib/api';
 import { isOffline } from '@/lib/connectivity';
 import { isQuotaExceeded, loadOcrQuota, OCRQuotaState } from '@/lib/ocr-quota';
 import { supportIdLabel } from '@/lib/subscription-identity';
+import { saveCsvExport } from '@/lib/csv-export';
 import { useAuth } from '@/providers/auth-provider';
 import { useSubscription } from '@/providers/subscription-provider';
 
@@ -18,6 +19,7 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [receipt, setReceipt] = useState<{ documentId: number; ocr: OCRResult }>();
   const [processing, setProcessing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [quota, setQuota] = useState<OCRQuotaState>({ status: 'loading' });
   const networkState = useNetworkState();
   const offline = isOffline(networkState);
@@ -62,6 +64,11 @@ export default function DashboardScreen() {
     const result = source === 'camera' ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
     if (!result.canceled) await handleAsset(result.assets[0]);
   }
+  async function exportCsv() {
+    try { setExporting(true); await saveCsvExport(await api.exportExpenses()); }
+    catch (error) { Alert.alert('Export failed', error instanceof Error ? error.message : 'Unknown error'); }
+    finally { setExporting(false); }
+  }
 
   return <SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}>
     {DEMO_MODE && <View style={styles.demoBanner}><Text style={styles.demoTitle}>Interactive demo mode</Text><Text style={styles.demoCopy}>Using in-memory sample data. Changes reset when the app restarts.</Text></View>}
@@ -73,7 +80,7 @@ export default function DashboardScreen() {
     {processing && <View style={styles.processing}><ActivityIndicator /><Text>Uploading and extracting receipt…</Text></View>}
     <QuotaCard quota={quota} proDetected={subscription.isPro} onUpgrade={subscription.showPaywall} />
     {subscription.isPro && summary && <ProAnalytics summary={summary} />}
-    <View style={styles.proCard}><Text style={styles.proTitle}>Advanced reports · Pro</Text><Text style={styles.proCopy}>{subscription.isPro ? 'Your Pro entitlement is active. Advanced reporting is unlocked.' : 'Upgrade through RevenueCat to unlock analytics and export features.'}</Text>{!subscription.isPro && <Action title="View Pro paywall" onPress={subscription.showPaywall} />}<Pressable onPress={subscription.restore}><Text style={styles.restore}>Restore purchases</Text></Pressable><View style={styles.identity}><Text style={styles.identityLabel}>Subscription identity · {subscription.identityMode}</Text><Text selectable style={styles.supportId}>{supportIdLabel(subscription.appUserId)}</Text></View>{subscription.message && <Text style={styles.message}>{subscription.message}</Text>}</View>
+    <View style={styles.proCard}><Text style={styles.proTitle}>Advanced reports · Pro</Text><Text style={styles.proCopy}>{subscription.isPro ? 'Your Pro entitlement is active. Advanced reporting is unlocked.' : 'Upgrade through RevenueCat to unlock analytics and export features.'}</Text>{subscription.isPro ? <Action title={exporting ? 'Preparing CSV…' : 'Export expenses CSV'} disabled={exporting} onPress={exportCsv} /> : <Action title="View Pro paywall" onPress={subscription.showPaywall} />}<Pressable onPress={subscription.restore}><Text style={styles.restore}>Restore purchases</Text></Pressable><View style={styles.identity}><Text style={styles.identityLabel}>Subscription identity · {subscription.identityMode}</Text><Text selectable style={styles.supportId}>{supportIdLabel(subscription.appUserId)}</Text></View>{subscription.message && <Text style={styles.message}>{subscription.message}</Text>}</View>
   </ScrollView><Modal visible={Boolean(receipt)} animationType="slide" onRequestClose={() => setReceipt(undefined)}>{receipt && <ExpenseForm documentId={receipt.documentId} ocr={receipt.ocr} onCancel={() => setReceipt(undefined)} onSaved={() => { setReceipt(undefined); load(); Alert.alert('Expense confirmed'); }} />}</Modal></SafeAreaView>;
 }
 function Metric({ label, value }: { label: string; value: string }) { return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricValue}>{value}</Text></View>; }

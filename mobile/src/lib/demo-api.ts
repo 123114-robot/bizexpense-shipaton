@@ -66,6 +66,11 @@ export function createDemoApi() {
     async deleteExpense(id: number): Promise<void> {
       expenses = expenses.filter((expense) => expense.id !== id);
     },
+    async exportExpenses(): Promise<string> {
+      const escape = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+      const rows = expenses.map((expense) => [expense.invoice_date, expense.supplier_name, expense.category_name, expense.description, expense.total_amount, expense.currency].map(escape).join(','));
+      return ['Date,Supplier,Category,Description,Total,Currency', ...rows].join('\n');
+    },
     async uploadReceipt(): Promise<{ id: number }> { return { id: nextDocumentId++ }; },
     async extractReceipt(): Promise<OCRResult> {
       if (ocrUsed >= ocrLimit) throw Object.assign(new Error('Monthly OCR limit reached'), { status: 429 });

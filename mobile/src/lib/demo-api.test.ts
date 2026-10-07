@@ -29,4 +29,11 @@ describe('standalone mobile demo API', () => {
     expect((await api.expenses()).some((expense) => expense.id === existing.id)).toBe(false);
     expect((await api.dashboard()).expense_count).toBe(1);
   });
+
+  it('exports the current demo expenses as CSV', async () => {
+    const api = createDemoApi();
+    const csv = await api.exportExpenses();
+    expect(csv).toContain('Date,Supplier,Category,Description,Total,Currency');
+    expect(csv).toContain('Acme Office Supplies');
+  });
 });
