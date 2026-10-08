@@ -1,3 +1,4 @@
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
 import { useCallback, useEffect, useState } from 'react';
@@ -9,6 +10,7 @@ import { ProAnalytics } from '@/components/pro-analytics';
 import { api, DashboardSummary, DEMO_MODE, OCRResult } from '@/lib/api';
 import { isOffline } from '@/lib/connectivity';
 import { isQuotaExceeded, loadOcrQuota, OCRQuotaState } from '@/lib/ocr-quota';
+import { ReceiptAsset, validateReceiptFile } from '@/lib/receipt-file';
 import { supportIdLabel } from '@/lib/subscription-identity';
 import { saveCsvExport } from '@/lib/csv-export';
 import { useAuth } from '@/providers/auth-provider';
@@ -40,7 +42,9 @@ export default function DashboardScreen() {
     load();
   }, [load]);
 
-  async function handleAsset(asset: ImagePicker.ImagePickerAsset) {
+  async function handleAsset(asset: ReceiptAsset) {
+    const validationError = validateReceiptFile(asset);
+    if (validationError) { Alert.alert('Unsupported receipt', validationError); return; }
     try { setProcessing(true); const document = await api.uploadReceipt(asset); setReceipt({ documentId: document.id, ocr: await api.extractReceipt(document.id) }); }
     catch (error) {
       if (isQuotaExceeded(error)) {
@@ -64,6 +68,28 @@ export default function DashboardScreen() {
     const result = source === 'camera' ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
     if (!result.canceled) await handleAsset(result.assets[0]);
   }
+  async function chooseFile() {
+    if (uploadBlocked) {
+      Alert.alert('You are offline', 'Connect to the internet before uploading a receipt.');
+      return;
+    }
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/jpeg', 'image/png'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (!result.canceled) await handleAsset({
+        uri: result.assets[0].uri,
+        fileName: result.assets[0].name,
+        mimeType: result.assets[0].mimeType,
+        fileSize: result.assets[0].size,
+        file: result.assets[0].file,
+      });
+    } catch (error) {
+      Alert.alert('File selection failed', error instanceof Error ? error.message : 'Unable to open this file.');
+    }
+  }
   async function exportCsv() {
     try { setExporting(true); await saveCsvExport(await api.exportExpenses()); }
     catch (error) { Alert.alert('Export failed', error instanceof Error ? error.message : 'Unknown error'); }
@@ -76,7 +102,7 @@ export default function DashboardScreen() {
     <View style={styles.heading}><View><Text style={styles.eyebrow}>BIZEXPENSE</Text><Text style={styles.title}>Money, sorted.</Text></View><View style={[styles.badge, subscription.isPro && styles.proBadge]}><Text style={styles.badgeText}>{subscription.isPro ? 'PRO' : 'FREE'}</Text></View></View><Text style={styles.subtitle}>Capture receipts, verify OCR, and keep GST totals accurate.</Text>
     {!DEMO_MODE && <View style={styles.accountRow}><Text style={styles.accountText}>{auth.user?.email}</Text><Pressable onPress={() => void auth.logout()}><Text style={styles.signOut}>Sign out</Text></Pressable></View>}
     <View style={styles.grid}><Metric label="This month" value={`$${summary?.expenses_this_month ?? '—'}`} /><Metric label="GST tracked" value={`$${summary?.gst_paid ?? '—'}`} /><Metric label="All expenses" value={`$${summary?.total_expenses ?? '—'}`} /><Metric label="Records" value={String(summary?.expense_count ?? '—')} /></View>
-    <Text style={styles.section}>Add a receipt</Text><View style={styles.row}><Action title="Take photo" disabled={uploadBlocked} onPress={() => choose('camera')} /><Action title="Choose image" disabled={uploadBlocked} onPress={() => choose('library')} /></View>
+    <Text style={styles.section}>Add a receipt</Text><View style={styles.row}><Action title="Take photo" disabled={uploadBlocked} onPress={() => choose('camera')} /><Action title="Choose image" disabled={uploadBlocked} onPress={() => choose('library')} /><Action title="Choose PDF/file" disabled={uploadBlocked} onPress={chooseFile} /></View>
     {processing && <View style={styles.processing}><ActivityIndicator /><Text>Uploading and extracting receipt…</Text></View>}
     <QuotaCard quota={quota} proDetected={subscription.isPro} onUpgrade={subscription.showPaywall} />
     {subscription.isPro && summary && <ProAnalytics summary={summary} />}
@@ -91,4 +117,4 @@ function QuotaCard({ quota, proDetected, onUpgrade }: { quota: OCRQuotaState; pr
   const unlimited = quota.limit === null;
   return <View style={styles.quotaCard}><Text style={styles.quotaTitle}>{unlimited ? 'OCR · Unlimited' : `Free OCR · ${quota.remaining} remaining`}</Text><Text style={styles.quotaCopy}>{unlimited ? `${quota.used} scans used this month. Unlimited access was confirmed by the backend.` : `${quota.used} of ${quota.limit} monthly scans used.`}</Text>{!unlimited && <Pressable onPress={onUpgrade}><Text style={styles.upgradeLink}>Upgrade to Pro</Text></Pressable>}</View>;
 }
-const styles = StyleSheet.create({ safe: { flex: 1, backgroundColor: '#F5F7FB' }, content: { padding: 22, paddingBottom: 120, gap: 18 }, demoBanner: { backgroundColor: '#E8F2FF', borderColor: '#80B5FF', borderWidth: 1, borderRadius: 14, padding: 14, gap: 3 }, demoTitle: { color: '#164A8A', fontWeight: '900' }, demoCopy: { color: '#245B9B' }, offlineBanner: { backgroundColor: '#FFF0D6', borderColor: '#F0B44D', borderWidth: 1, borderRadius: 14, padding: 14, gap: 3 }, offlineTitle: { color: '#713F12', fontWeight: '900' }, offlineCopy: { color: '#854D0E', lineHeight: 19 }, heading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, eyebrow: { color: '#1B6EF3', fontWeight: '900', letterSpacing: 2 }, title: { fontSize: 34, fontWeight: '900', color: '#10213B' }, subtitle: { color: '#5D687A', fontSize: 16, lineHeight: 23 }, accountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#E8EEF8', padding: 12, borderRadius: 12 }, accountText: { color: '#43516A' }, signOut: { color: '#1B6EF3', fontWeight: '800' }, badge: { backgroundColor: '#DDE5F0', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20 }, proBadge: { backgroundColor: '#FFD166' }, badgeText: { fontWeight: '900', color: '#17233B' }, grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, metric: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, width: '48%', minHeight: 95 }, metricLabel: { color: '#758096' }, metricValue: { fontSize: 23, fontWeight: '800', color: '#14213D', marginTop: 8 }, section: { fontSize: 20, fontWeight: '800', color: '#14213D' }, row: { flexDirection: 'row', gap: 10 }, action: { backgroundColor: '#1B6EF3', padding: 14, borderRadius: 12, flex: 1, alignItems: 'center' }, actionDisabled: { backgroundColor: '#98A2B3' }, actionText: { color: '#FFF', fontWeight: '800' }, processing: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 12 }, quotaCard: { backgroundColor: '#FFF', borderRadius: 16, padding: 17, gap: 7 }, quotaTitle: { color: '#17233B', fontSize: 17, fontWeight: '800' }, quotaCopy: { color: '#667085', lineHeight: 20 }, quotaNote: { color: '#B26A00', fontWeight: '700' }, upgradeLink: { color: '#1B6EF3', fontWeight: '800' }, proCard: { backgroundColor: '#16233B', borderRadius: 18, padding: 20, gap: 12 }, proTitle: { color: '#FFF', fontSize: 20, fontWeight: '800' }, proCopy: { color: '#CAD2E1', lineHeight: 21 }, restore: { color: '#9DC0FF', textAlign: 'center', fontWeight: '700', padding: 5 }, identity: { borderTopWidth: 1, borderTopColor: '#34425B', paddingTop: 12, gap: 4 }, identityLabel: { color: '#CAD2E1', fontWeight: '700' }, supportId: { color: '#9DC0FF', fontSize: 12 }, message: { color: '#FFD166', textAlign: 'center' } });
+const styles = StyleSheet.create({ safe: { flex: 1, backgroundColor: '#F5F7FB' }, content: { padding: 22, paddingBottom: 120, gap: 18 }, demoBanner: { backgroundColor: '#E8F2FF', borderColor: '#80B5FF', borderWidth: 1, borderRadius: 14, padding: 14, gap: 3 }, demoTitle: { color: '#164A8A', fontWeight: '900' }, demoCopy: { color: '#245B9B' }, offlineBanner: { backgroundColor: '#FFF0D6', borderColor: '#F0B44D', borderWidth: 1, borderRadius: 14, padding: 14, gap: 3 }, offlineTitle: { color: '#713F12', fontWeight: '900' }, offlineCopy: { color: '#854D0E', lineHeight: 19 }, heading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, eyebrow: { color: '#1B6EF3', fontWeight: '900', letterSpacing: 2 }, title: { fontSize: 34, fontWeight: '900', color: '#10213B' }, subtitle: { color: '#5D687A', fontSize: 16, lineHeight: 23 }, accountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#E8EEF8', padding: 12, borderRadius: 12 }, accountText: { color: '#43516A' }, signOut: { color: '#1B6EF3', fontWeight: '800' }, badge: { backgroundColor: '#DDE5F0', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20 }, proBadge: { backgroundColor: '#FFD166' }, badgeText: { fontWeight: '900', color: '#17233B' }, grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, metric: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, width: '48%', minHeight: 95 }, metricLabel: { color: '#758096' }, metricValue: { fontSize: 23, fontWeight: '800', color: '#14213D', marginTop: 8 }, section: { fontSize: 20, fontWeight: '800', color: '#14213D' }, row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, action: { backgroundColor: '#1B6EF3', padding: 14, borderRadius: 12, flexGrow: 1, minWidth: 105, alignItems: 'center' }, actionDisabled: { backgroundColor: '#98A2B3' }, actionText: { color: '#FFF', fontWeight: '800' }, processing: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 12 }, quotaCard: { backgroundColor: '#FFF', borderRadius: 16, padding: 17, gap: 7 }, quotaTitle: { color: '#17233B', fontSize: 17, fontWeight: '800' }, quotaCopy: { color: '#667085', lineHeight: 20 }, quotaNote: { color: '#B26A00', fontWeight: '700' }, upgradeLink: { color: '#1B6EF3', fontWeight: '800' }, proCard: { backgroundColor: '#16233B', borderRadius: 18, padding: 20, gap: 12 }, proTitle: { color: '#FFF', fontSize: 20, fontWeight: '800' }, proCopy: { color: '#CAD2E1', lineHeight: 21 }, restore: { color: '#9DC0FF', textAlign: 'center', fontWeight: '700', padding: 5 }, identity: { borderTopWidth: 1, borderTopColor: '#34425B', paddingTop: 12, gap: 4 }, identityLabel: { color: '#CAD2E1', fontWeight: '700' }, supportId: { color: '#9DC0FF', fontSize: 12 }, message: { color: '#FFD166', textAlign: 'center' } });

@@ -1,6 +1,7 @@
 import { createDemoApi } from './demo-api';
 import { announceUnauthorized, getAccessToken, getRefreshToken, replaceSessionTokens } from './session-token';
 import { buildExpenseQuery, ExpenseFilterState } from './expense-filters';
+import { receiptMimeType, ReceiptAsset } from './receipt-file';
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
 export const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
@@ -84,9 +85,10 @@ const remoteApi = {
   updateExpense: (id: number, payload: ExpenseInput) => request<Expense>(`/expenses/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   deleteExpense: (id: number) => request<void>(`/expenses/${id}`, { method: 'DELETE' }),
   exportExpenses: async () => (await requestResponse('/expenses/export.csv')).text(),
-  uploadReceipt: (asset: { uri: string; fileName?: string | null; mimeType?: string | null }) => {
+  uploadReceipt: (asset: ReceiptAsset) => {
     const body = new FormData();
-    body.append('file', { uri: asset.uri, name: asset.fileName ?? 'receipt.jpg', type: asset.mimeType ?? 'image/jpeg' } as never);
+    if (asset.file) body.append('file', asset.file, asset.fileName ?? asset.file.name);
+    else body.append('file', { uri: asset.uri, name: asset.fileName ?? 'receipt.jpg', type: receiptMimeType(asset) ?? 'image/jpeg' } as never);
     return request<{ id: number }>('/documents/upload', { method: 'POST', body });
   },
   extractReceipt: (id: number) => request<OCRResult>(`/documents/${id}/extract`, { method: 'POST' }),
