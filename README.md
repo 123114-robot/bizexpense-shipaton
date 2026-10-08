@@ -61,10 +61,6 @@ See [docs/SHIPATON_PLAN.md](docs/SHIPATON_PLAN.md) for the detailed project plan
 
 ### Mobile delivery branches
 
-The mobile work is published as stacked, reviewable stages. Review or merge them in order:
+The Mobile work is published as stacked, reviewable stages. Stages 1–4F establish the client, receipt flow, RevenueCat integration, device UX and Demo Mode. Stages 5A–5Q connect the authenticated mainline APIs and add expense management, analytics, CSV export, refresh sessions, PDF upload, duplicate warnings, OCR field confidence, packaging validation, automated demo regression coverage and the current team handoff.
 
-1. `feature/mobile-stage-1-core` — FastAPI client, dashboard, expense list/detail, and manual expense creation.
-2. `feature/mobile-stage-2-receipts` — camera/library receipt upload, OCR extraction, editable review, and explicit confirmation.
-3. `feature/mobile-stage-3-revenuecat` — real `pro` entitlement detection, RevenueCat paywall, restore purchases, safe missing-key handling, tests, and team documentation.
-
-The existing web frontend and backend business logic are preserved. See the plan for verified status and remaining work; branch presence does not mean device/store validation is complete.
+The latest stacked branch is `feature/mobile-stage-5q-team-handoff`. See [`mobile/README.md`](mobile/README.md) and [`docs/stages/`](docs/stages/) for the implementation boundary, setup, validation commands, mock limitations and remaining mainline/account dependencies. Branch publication does not mean the work has been merged to `main` or validated with production accounts.

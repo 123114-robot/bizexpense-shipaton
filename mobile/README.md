@@ -1,83 +1,94 @@
 # BizExpense Mobile
 
-Expo client for the existing BizExpense FastAPI backend, with receipt OCR review and RevenueCat-powered Pro access.
+Expo/React Native client for the shared BizExpense FastAPI backend and the RevenueCat Shipaton 2026 prototype.
+
+## Current status
+
+The Mobile prototype provides:
+
+- Dashboard KPIs, confirmed-expense analytics, category trends, average expense and top suppliers
+- Expense search, status/category/date filters, create, edit, detail and delete flows
+- Camera, photo-library and PDF/JPEG/PNG upload with offline and 10 MB validation
+- OCR draft review, editable extracted fields, explicit confirmation and field-confidence warnings
+- Non-blocking duplicate-expense warnings returned by the shared backend
+- Access/refresh-token rotation with SecureStore on native platforms
+- RevenueCat `pro` presentation, paywall, restore flow, premium analytics and CSV export
+- Android, iOS and Web bundles plus a reproducible Playwright demo recording
+
+## Ownership boundary
+
+This project owns Mobile screens, navigation, device interaction, RevenueCat client presentation, OCR review UX, error states, tests and packaging.
+
+The shared BizExpense mainline remains the source of truth for authentication, tenant isolation, expenses, documents, OCR processing, database migrations, Dashboard calculations, duplicate detection and production authorization. Do not add a second backend or trust a client-side RevenueCat entitlement as server authorization.
 
 ## Setup
 
-1. Copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL` to a URL reachable from the device (Android emulator usually uses `http://10.0.2.2:8000/api`).
-2. Add the RevenueCat public platform API key(s). The app remains usable in Free mode when keys are omitted.
-3. Start the backend, then run `npm install` and `npm start` in this directory.
-
-When demo mode is disabled, the app uses the shared BizExpense `/auth/register`, `/auth/login`, and `/auth/me` endpoints. JWTs are stored with Expo SecureStore on native devices and attached to every API request. Web previews use browser local storage.
-
-RevenueCat uses the `pro` entitlement. Purchases require an Expo development build; Expo Go can be used for UI preview but does not provide a production purchase environment.
-
-## Standalone demo
-
-For a backend-free prototype, set `EXPO_PUBLIC_DEMO_MODE=true` in `mobile/.env`, then run `npm start`. Demo mode provides session-only sample dashboard data, manual expense creation, mock receipt OCR, and an OCR allowance. It is visibly labelled and resets when the app restarts.
-
-## Development builds
-
-Run `npm run config:check` before creating a build. EAS profiles are defined in `eas.json`:
-
-- `development`: internal development client for physical devices
-- `ios-simulator`: development client for the iOS Simulator
-- `preview`: internal production-like team build
-- `production`: store build with automatic build-number incrementing
-
-The repository intentionally does not set `ios.bundleIdentifier`, `android.package`, an EAS project ID, or RevenueCat dashboard values. Confirm ownership with the team, link the intended Expo account, and then configure these values. See `docs/stages/STAGE_4A_DEVELOPMENT_BUILD.md` for the checklist.
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+Copy-Item .env.example .env
+npm install
+npm run validate
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Set `EXPO_PUBLIC_API_URL` to a backend URL reachable from the device. Android emulators commonly use `http://10.0.2.2:8000/api`; physical devices need the computer's reachable LAN or HTTPS address.
 
-### Other setup steps
+Configure the RevenueCat public SDK key for each target platform. Missing keys keep the app usable in Free mode. Purchases require a development build rather than Expo Go.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Demo mode
 
-## Learn more
+Set this value in `mobile/.env`:
 
-To learn more about developing your project with Expo, look at the following resources:
+```dotenv
+EXPO_PUBLIC_DEMO_MODE=true
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Demo Mode is visibly labelled, uses in-memory sample data and deterministic mock OCR, and resets when the app restarts. It does not prove live OCR, persistence, billing or server-side Pro authorization.
 
-## Join the community
+Run the recorded browser walkthrough from the repository root:
 
-Join our community of developers creating universal apps.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\demo\run-demo.ps1
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The recording is written to `demo/recordings/bizexpense-demo.webm` and is intentionally ignored by Git.
+
+## Validation and packaging
+
+```powershell
+npm run validate
+npx expo-doctor
+npm run export:web
+npm run export:all
+```
+
+EAS profiles in `eas.json`:
+
+- `development`: internal development client
+- `ios-simulator`: iOS Simulator development client
+- `preview`: internal production-like build
+- `production`: store build with automatic build-number incrementing
+
+Before a signed build, the team must configure the EAS project/owner, bundle identifiers, signing credentials, production API URL and RevenueCat keys. These account-owned values must not be committed to this public repository.
+
+## Shared mainline dependencies
+
+The Mobile adapter currently uses:
+
+- `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/me`
+- `/api/health`
+- `/api/dashboard/summary`
+- `/api/categories`
+- `/api/expenses` and `/api/expenses/export.csv`
+- `/api/documents/upload` and `/api/documents/{id}/extract`
+
+`/api/documents/ocr-usage` is not yet available in BizExpense mainline. Mobile therefore shows an explicit unavailable state outside Demo Mode.
+
+OCR `field_confidence` currently comes from the mainline `phase-19-ocr-field-confidence` branch and remains optional until that contract is merged. Real OCR accuracy still requires a configured provider and representative invoice validation.
+
+## Delivery history
+
+Stages 1–4F established the Mobile client, receipt capture, RevenueCat integration, offline/quota UX, packaging baseline and standalone Demo Mode.
+
+Stages 5A–5Q added authenticated mainline integration, hardened OCR review, analytics, filters and expense management, CSV export, refresh sessions, PDF upload, supplier insights, duplicate warnings, field-confidence UX, Expo SDK alignment, end-to-end demo regression coverage and this handoff.
+
+Each stage is documented in [`../docs/stages/`](../docs/stages/). The latest stacked branch is `feature/mobile-stage-5q-team-handoff`; branch publication does not mean it has been merged to `main` or validated with production accounts.
