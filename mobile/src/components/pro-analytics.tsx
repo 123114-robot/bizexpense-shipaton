@@ -8,6 +8,16 @@ export function ProAnalytics({ summary }: { summary: DashboardSummary }) {
 
   return <View style={styles.wrapper}>
     <View style={styles.card}>
+      <Text style={styles.title}>Supplier insights</Text>
+      <Text style={styles.average}>${Number(summary.average_expense).toFixed(2)}</Text>
+      <Text style={styles.caption}>Average confirmed expense</Text>
+      {summary.top_suppliers.map((item) => <View key={item.supplier} style={styles.categoryRow}>
+        <View><Text style={styles.label}>{item.supplier}</Text><Text style={styles.caption}>{item.expense_count} expense{item.expense_count === 1 ? '' : 's'}</Text></View>
+        <Text style={styles.amount}>${Number(item.total).toFixed(2)}</Text>
+      </View>)}
+      {!summary.top_suppliers.length && <Text style={styles.caption}>No confirmed suppliers yet.</Text>}
+    </View>
+    <View style={styles.card}>
       <Text style={styles.title}>Spending by category</Text>
       <Text style={styles.caption}>Confirmed expenses only</Text>
       {summary.category_breakdown.map((item) => <View key={item.category} style={styles.categoryRow}>
@@ -27,4 +37,4 @@ export function ProAnalytics({ summary }: { summary: DashboardSummary }) {
   </View>;
 }
 
-const styles = StyleSheet.create({ wrapper: { gap: 14 }, card: { backgroundColor: '#FFF', borderRadius: 16, padding: 17, gap: 10 }, title: { color: '#17233B', fontSize: 18, fontWeight: '800' }, caption: { color: '#667085', fontSize: 12 }, categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEF1F5', paddingTop: 10 }, label: { color: '#25324B', fontWeight: '700' }, amount: { color: '#17233B', fontWeight: '900' }, chart: { height: 165, flexDirection: 'row', alignItems: 'flex-end', gap: 8 }, barColumn: { flex: 1, alignItems: 'center', gap: 5 }, barValue: { color: '#667085', fontSize: 9 }, bar: { width: '100%', maxWidth: 34, backgroundColor: '#1B6EF3', borderTopLeftRadius: 5, borderTopRightRadius: 5 }, month: { color: '#667085', fontSize: 10 } });
+const styles = StyleSheet.create({ wrapper: { gap: 14 }, card: { backgroundColor: '#FFF', borderRadius: 16, padding: 17, gap: 10 }, title: { color: '#17233B', fontSize: 18, fontWeight: '800' }, average: { color: '#1B6EF3', fontSize: 30, fontWeight: '900' }, caption: { color: '#667085', fontSize: 12 }, categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEF1F5', paddingTop: 10 }, label: { color: '#25324B', fontWeight: '700' }, amount: { color: '#17233B', fontWeight: '900' }, chart: { height: 165, flexDirection: 'row', alignItems: 'flex-end', gap: 8 }, barColumn: { flex: 1, alignItems: 'center', gap: 5 }, barValue: { color: '#667085', fontSize: 9 }, bar: { width: '100%', maxWidth: 34, backgroundColor: '#1B6EF3', borderTopLeftRadius: 5, borderTopRightRadius: 5 }, month: { color: '#667085', fontSize: 10 } });

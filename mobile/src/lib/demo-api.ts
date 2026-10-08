@@ -22,14 +22,26 @@ export function createDemoApi() {
 
   return {
     async dashboard(): Promise<DashboardSummary> {
-      const total = expenses.reduce((sum, expense) => sum + Number(expense.total_amount), 0);
-      const gst = expenses.reduce((sum, expense) => sum + Number(expense.gst_amount), 0);
+      const confirmed = expenses.filter((expense) => expense.ocr_confirmed);
+      const total = confirmed.reduce((sum, expense) => sum + Number(expense.total_amount), 0);
+      const gst = confirmed.reduce((sum, expense) => sum + Number(expense.gst_amount), 0);
       const categoryBreakdown = categories.map((category) => {
-        const rows = expenses.filter((expense) => expense.category_id === category.id);
+        const rows = confirmed.filter((expense) => expense.category_id === category.id);
         return { category: category.name, total: rows.reduce((sum, expense) => sum + Number(expense.total_amount), 0).toFixed(2), expense_count: rows.length };
       }).filter((item) => item.expense_count > 0);
+      const supplierTotals = new Map<string, { total: number; expense_count: number }>();
+      confirmed.forEach((expense) => {
+        const current = supplierTotals.get(expense.supplier_name) ?? { total: 0, expense_count: 0 };
+        supplierTotals.set(expense.supplier_name, { total: current.total + Number(expense.total_amount), expense_count: current.expense_count + 1 });
+      });
+      const topSuppliers = [...supplierTotals.entries()]
+        .map(([supplier, value]) => ({ supplier, total: value.total.toFixed(2), expense_count: value.expense_count }))
+        .sort((a, b) => Number(b.total) - Number(a.total))
+        .slice(0, 5);
       return {
-        total_expenses: total.toFixed(2), expenses_this_month: total.toFixed(2), gst_paid: gst.toFixed(2), expense_count: expenses.length,
+        total_expenses: total.toFixed(2), expenses_this_month: total.toFixed(2), gst_paid: gst.toFixed(2), expense_count: confirmed.length,
+        average_expense: confirmed.length ? (total / confirmed.length).toFixed(2) : '0.00',
+        top_suppliers: topSuppliers,
         category_breakdown: categoryBreakdown,
         monthly_trend: [
           { month: '2026-05', total: '0.00' }, { month: '2026-06', total: '34.00' }, { month: '2026-07', total: '72.50' },

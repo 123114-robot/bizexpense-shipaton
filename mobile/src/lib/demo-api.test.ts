@@ -4,7 +4,13 @@ import { createDemoApi } from './demo-api';
 describe('standalone mobile demo API', () => {
   it('supports dashboard, list, and manual expense creation in one session', async () => {
     const api = createDemoApi();
+    const initialDashboard = await api.dashboard();
     expect((await api.expenses())).toHaveLength(2);
+    expect(initialDashboard.average_expense).toBe('79.75');
+    expect(initialDashboard.top_suppliers).toEqual([
+      { supplier: 'Acme Office Supplies', total: '110.00', expense_count: 1 },
+      { supplier: 'Cloud Tools', total: '49.50', expense_count: 1 },
+    ]);
     await api.createExpense({ supplier_name: 'Demo Taxi', category_id: 2, document_id: null, invoice_number: null, invoice_date: '2026-09-30', due_date: null, subtotal: 20, gst_amount: 2, total_amount: 22, currency: 'AUD', description: 'Airport transfer', ocr_confidence: null, ocr_confirmed: true });
     expect((await api.expenses())).toHaveLength(3);
     expect((await api.dashboard()).expense_count).toBe(3);
