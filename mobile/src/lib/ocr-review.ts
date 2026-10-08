@@ -1,3 +1,24 @@
+import type { OCRFieldConfidence } from './api';
+
+const confidenceLabels: Record<keyof OCRFieldConfidence, string> = {
+  supplier_name: 'Supplier',
+  abn: 'ABN',
+  invoice_number: 'Invoice number',
+  invoice_date: 'Invoice date',
+  due_date: 'Due date',
+  subtotal: 'Subtotal',
+  gst: 'GST',
+  total: 'Total',
+  currency: 'Currency',
+};
+
+export function lowConfidenceFields(confidences?: OCRFieldConfidence | null) {
+  if (!confidences) return [];
+  return (Object.entries(confidences) as [keyof OCRFieldConfidence, number | null][])
+    .filter((entry): entry is [keyof OCRFieldConfidence, number] => typeof entry[1] === 'number' && entry[1] < 0.7)
+    .map(([key, confidence]) => ({ key, label: confidenceLabels[key], confidence }));
+}
+
 type OcrDraft = {
   supplier: string;
   date: string;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { reviewOcrDraft } from './ocr-review';
+import { lowConfidenceFields, reviewOcrDraft } from './ocr-review';
 
 describe('OCR review safeguards', () => {
   it('accepts a consistent receipt', () => {
@@ -32,5 +32,13 @@ describe('OCR review safeguards', () => {
       'OCR confidence is low; verify every field.',
       'Invoice number was not detected.',
     ]);
+  });
+
+  it('identifies only provider fields below the mainline threshold', () => {
+    expect(lowConfidenceFields({ supplier_name: 0.62, abn: null, invoice_date: 0.7, total: 0.91, invoice_number: 0.49 })).toEqual([
+      { key: 'supplier_name', label: 'Supplier', confidence: 0.62 },
+      { key: 'invoice_number', label: 'Invoice number', confidence: 0.49 },
+    ]);
+    expect(lowConfidenceFields(null)).toEqual([]);
   });
 });

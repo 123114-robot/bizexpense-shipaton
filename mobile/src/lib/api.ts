@@ -19,7 +19,8 @@ export type DashboardSummary = {
 export type Category = { id: number; name: string };
 export type Expense = { id: number; supplier_name: string; category_id: number; category_name: string; document_id: number | null; invoice_number: string | null; invoice_date: string; due_date: string | null; subtotal: number; gst_amount: number; total_amount: number; currency: string; description: string; ocr_confidence: number | null; ocr_confirmed: boolean; duplicate_warning: boolean; duplicate_expense_id: number | null };
 export type ExpenseInput = Omit<Expense, 'id' | 'category_name' | 'duplicate_warning' | 'duplicate_expense_id'>;
-export type OCRResult = { supplier_name: string; abn: string | null; invoice_number: string | null; invoice_date: string; due_date: string | null; subtotal: number; gst: number; total: number; currency: string; confidence: number; confirmed: boolean };
+export type OCRFieldConfidence = Partial<Record<'supplier_name' | 'abn' | 'invoice_number' | 'invoice_date' | 'due_date' | 'subtotal' | 'gst' | 'total' | 'currency', number | null>>;
+export type OCRResult = { supplier_name: string; abn: string | null; invoice_number: string | null; invoice_date: string; due_date: string | null; subtotal: number; gst: number; total: number; currency: string; confidence: number; field_confidence?: OCRFieldConfidence | null; confirmed: boolean };
 export type OCRUsageResponse = { used: number; limit: number | null; remaining: number | null };
 
 export class ApiError extends Error {

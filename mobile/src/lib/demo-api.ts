@@ -94,7 +94,7 @@ export function createDemoApi() {
     async extractReceipt(): Promise<OCRResult> {
       if (ocrUsed >= ocrLimit) throw Object.assign(new Error('Monthly OCR limit reached'), { status: 429 });
       ocrUsed += 1;
-      return { supplier_name: 'Harbour Café', abn: '12 345 678 901', invoice_number: 'DEMO-302', invoice_date: new Date().toISOString().slice(0, 10), due_date: null, subtotal: 27.18, gst: 2.72, total: 29.9, currency: 'AUD', confidence: 0.94, confirmed: false };
+      return { supplier_name: 'Harbour Café', abn: '12 345 678 901', invoice_number: 'DEMO-302', invoice_date: new Date().toISOString().slice(0, 10), due_date: null, subtotal: 27.18, gst: 2.72, total: 29.9, currency: 'AUD', confidence: 0.94, field_confidence: { supplier_name: 0.96, invoice_number: 0.64, invoice_date: 0.91, subtotal: 0.9, gst: 0.73, total: 0.95, currency: 0.99 }, confirmed: false };
     },
     async ocrUsage(): Promise<OCRUsageResponse> { return { used: ocrUsed, limit: ocrLimit, remaining: Math.max(0, ocrLimit - ocrUsed) }; },
   };
