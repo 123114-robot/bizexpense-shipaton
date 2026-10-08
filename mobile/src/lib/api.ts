@@ -1,5 +1,5 @@
 import { createDemoApi } from './demo-api';
-import { announceUnauthorized, getAccessToken, setAccessToken } from './session-token';
+import { announceUnauthorized, getAccessToken, getRefreshToken, replaceSessionTokens } from './session-token';
 import { buildExpenseQuery, ExpenseFilterState } from './expense-filters';
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
@@ -32,15 +32,43 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function requestResponse(path: string, init?: RequestInit): Promise<Response> {
+let refreshPromise: Promise<AuthResponse> | null = null;
+
+async function refreshSession(): Promise<AuthResponse> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) throw new ApiError(401, 'Your session has expired.');
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    }).then(async (response) => {
+      if (!response.ok) throw new ApiError(response.status, 'Your session has expired.');
+      const session = await response.json() as AuthResponse;
+      await replaceSessionTokens(session.access_token, session.refresh_token);
+      return session;
+    }).finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
+async function requestResponse(path: string, init?: RequestInit, allowRefresh = true): Promise<Response> {
   const headers = new Headers(init?.headers);
   const token = getAccessToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
   const response = await fetch(`${API_URL}${path}`, { ...init, headers });
   if (!response.ok) {
     const body = await response.json().catch(() => ({})) as { detail?: string };
-    if (response.status === 401) {
-      setAccessToken(null);
+    if (response.status === 401 && allowRefresh && getRefreshToken()) {
+      try {
+        await refreshSession();
+        return requestResponse(path, init, false);
+      } catch {
+        await replaceSessionTokens(null, null);
+        announceUnauthorized();
+      }
+    } else if (response.status === 401) {
+      await replaceSessionTokens(null, null);
       announceUnauthorized();
     }
     throw new ApiError(response.status, body.detail || `Request failed (${response.status})`);
@@ -68,10 +96,11 @@ const remoteApi = {
 export const api = DEMO_MODE ? createDemoApi() : remoteApi;
 
 export type AuthUser = { id: number; name: string; email: string; role: string };
-export type AuthResponse = { access_token: string; token_type: string; user: AuthUser };
+export type AuthResponse = { access_token: string; refresh_token: string; token_type: string; user: AuthUser };
 export const authApi = {
   login: (email: string, password: string) => request<AuthResponse>('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }),
   register: (name: string, email: string, password: string) => request<AuthResponse>('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) }),
+  logout: (refreshToken: string) => request<void>('/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: refreshToken }) }),
   me: () => request<AuthUser>('/auth/me'),
 };
 
