@@ -42,4 +42,14 @@ describe('standalone mobile demo API', () => {
     expect(csv).toContain('Date,Supplier,Category,Description,Total,Currency');
     expect(csv).toContain('Acme Office Supplies');
   });
+
+  it('returns a non-blocking warning for matching supplier, invoice, and total', async () => {
+    const api = createDemoApi();
+    const existing = (await api.expenses())[0];
+    const duplicate = await api.createExpense({ supplier_name: existing.supplier_name, category_id: existing.category_id, document_id: null, invoice_number: existing.invoice_number, invoice_date: existing.invoice_date, due_date: null, subtotal: existing.subtotal, gst_amount: existing.gst_amount, total_amount: existing.total_amount, currency: existing.currency, description: 'Duplicate demo receipt', ocr_confidence: 0.9, ocr_confirmed: true });
+
+    expect(duplicate.duplicate_warning).toBe(true);
+    expect(duplicate.duplicate_expense_id).toBe(existing.id);
+    expect((await api.expenses())).toHaveLength(3);
+  });
 });

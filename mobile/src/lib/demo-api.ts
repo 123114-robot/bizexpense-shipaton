@@ -9,8 +9,8 @@ const categories: Category[] = [
 ];
 
 const initialExpenses: Expense[] = [
-  { id: 1, supplier_name: 'Acme Office Supplies', category_id: 1, category_name: 'Office Supplies', document_id: 1, invoice_number: 'INV-204', invoice_date: '2026-09-28', due_date: null, subtotal: 100, gst_amount: 10, total_amount: 110, currency: 'AUD', description: 'Printer supplies', ocr_confidence: 0.92, ocr_confirmed: true },
-  { id: 2, supplier_name: 'Cloud Tools', category_id: 3, category_name: 'Software', document_id: null, invoice_number: 'SUB-0926', invoice_date: '2026-09-24', due_date: null, subtotal: 45, gst_amount: 4.5, total_amount: 49.5, currency: 'AUD', description: 'Monthly software subscription', ocr_confidence: null, ocr_confirmed: true },
+  { id: 1, supplier_name: 'Acme Office Supplies', category_id: 1, category_name: 'Office Supplies', document_id: 1, invoice_number: 'INV-204', invoice_date: '2026-09-28', due_date: null, subtotal: 100, gst_amount: 10, total_amount: 110, currency: 'AUD', description: 'Printer supplies', ocr_confidence: 0.92, ocr_confirmed: true, duplicate_warning: false, duplicate_expense_id: null },
+  { id: 2, supplier_name: 'Cloud Tools', category_id: 3, category_name: 'Software', document_id: null, invoice_number: 'SUB-0926', invoice_date: '2026-09-24', due_date: null, subtotal: 45, gst_amount: 4.5, total_amount: 49.5, currency: 'AUD', description: 'Monthly software subscription', ocr_confidence: null, ocr_confirmed: true, duplicate_warning: false, duplicate_expense_id: null },
 ];
 
 export function createDemoApi() {
@@ -19,6 +19,13 @@ export function createDemoApi() {
   let nextDocumentId = 10;
   let ocrUsed = 2;
   const ocrLimit = 5;
+  const withDuplicateWarning = (expense: Expense): Expense => {
+    const duplicate = expense.invoice_number ? expenses.find((candidate) => candidate.id !== expense.id
+      && candidate.supplier_name === expense.supplier_name
+      && candidate.invoice_number === expense.invoice_number
+      && Number(candidate.total_amount) === Number(expense.total_amount)) : undefined;
+    return { ...expense, duplicate_warning: Boolean(duplicate), duplicate_expense_id: duplicate?.id ?? null };
+  };
 
   return {
     async dashboard(): Promise<DashboardSummary> {
@@ -58,22 +65,22 @@ export function createDemoApi() {
         const matchesStart = !filters?.date_from || expense.invoice_date >= filters.date_from;
         const matchesEnd = !filters?.date_to || expense.invoice_date <= filters.date_to;
         return matchesSearch && matchesStatus && matchesCategory && matchesStart && matchesEnd;
-      }).map((expense) => ({ ...expense }));
+      }).map(withDuplicateWarning);
     },
     async categories(): Promise<Category[]> { return categories.map((category) => ({ ...category })); },
     async createExpense(payload: ExpenseInput): Promise<Expense> {
       const category = categories.find((item) => item.id === payload.category_id) ?? categories[0];
-      const expense: Expense = { ...payload, id: nextExpenseId++, category_name: category.name };
+      const expense: Expense = { ...payload, id: nextExpenseId++, category_name: category.name, duplicate_warning: false, duplicate_expense_id: null };
       expenses = [expense, ...expenses];
-      return { ...expense };
+      return withDuplicateWarning(expense);
     },
     async updateExpense(id: number, payload: ExpenseInput): Promise<Expense> {
       const index = expenses.findIndex((expense) => expense.id === id);
       if (index < 0) throw Object.assign(new Error('Expense not found'), { status: 404 });
       const category = categories.find((item) => item.id === payload.category_id) ?? categories[0];
-      const updated: Expense = { ...payload, id, category_name: category.name };
+      const updated: Expense = { ...payload, id, category_name: category.name, duplicate_warning: false, duplicate_expense_id: null };
       expenses[index] = updated;
-      return { ...updated };
+      return withDuplicateWarning(updated);
     },
     async deleteExpense(id: number): Promise<void> {
       expenses = expenses.filter((expense) => expense.id !== id);

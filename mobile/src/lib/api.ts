@@ -17,8 +17,8 @@ export type DashboardSummary = {
   monthly_trend: { month: string; total: string }[];
 };
 export type Category = { id: number; name: string };
-export type Expense = { id: number; supplier_name: string; category_id: number; category_name: string; document_id: number | null; invoice_number: string | null; invoice_date: string; due_date: string | null; subtotal: number; gst_amount: number; total_amount: number; currency: string; description: string; ocr_confidence: number | null; ocr_confirmed: boolean };
-export type ExpenseInput = Omit<Expense, 'id' | 'category_name'>;
+export type Expense = { id: number; supplier_name: string; category_id: number; category_name: string; document_id: number | null; invoice_number: string | null; invoice_date: string; due_date: string | null; subtotal: number; gst_amount: number; total_amount: number; currency: string; description: string; ocr_confidence: number | null; ocr_confirmed: boolean; duplicate_warning: boolean; duplicate_expense_id: number | null };
+export type ExpenseInput = Omit<Expense, 'id' | 'category_name' | 'duplicate_warning' | 'duplicate_expense_id'>;
 export type OCRResult = { supplier_name: string; abn: string | null; invoice_number: string | null; invoice_date: string; due_date: string | null; subtotal: number; gst: number; total: number; currency: string; confidence: number; confirmed: boolean };
 export type OCRUsageResponse = { used: number; limit: number | null; remaining: number | null };
 

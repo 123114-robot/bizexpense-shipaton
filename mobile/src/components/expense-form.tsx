@@ -3,7 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { api, Category, Expense, ExpenseInput, OCRResult } from '@/lib/api';
 import { reviewOcrDraft } from '@/lib/ocr-review';
 
-type Props = { documentId?: number; ocr?: OCRResult; expense?: Expense; onSaved: () => void; onCancel: () => void };
+type Props = { documentId?: number; ocr?: OCRResult; expense?: Expense; onSaved: (saved: Expense) => void; onCancel: () => void };
 
 export function ExpenseForm({ documentId, ocr, expense, onSaved, onCancel }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -22,7 +22,7 @@ export function ExpenseForm({ documentId, ocr, expense, onSaved, onCancel }: Pro
     const payload: ExpenseInput = { supplier_name: supplier.trim(), category_id: categoryId, document_id: documentId ?? expense?.document_id ?? null, invoice_number: expense?.invoice_number ?? ocr?.invoice_number ?? null, invoice_date: date, due_date: expense?.due_date ?? ocr?.due_date ?? null, subtotal: Number(subtotal), gst_amount: Number(gst), total_amount: Number(total), currency: expense?.currency ?? ocr?.currency ?? 'AUD', description: description.trim(), ocr_confidence: expense?.ocr_confidence ?? ocr?.confidence ?? null, ocr_confirmed: expense?.ocr_confirmed ?? true };
     if (!payload.supplier_name || !payload.description || [payload.subtotal, payload.gst_amount, payload.total_amount].some(Number.isNaN)) { Alert.alert('Check the form', 'Supplier, description and valid amounts are required.'); return; }
     if (review?.errors.length) { Alert.alert('Review OCR fields', review.errors.join('\n')); return; }
-    try { setSaving(true); if (expense) await api.updateExpense(expense.id, payload); else await api.createExpense(payload); onSaved(); }
+    try { setSaving(true); const saved = expense ? await api.updateExpense(expense.id, payload) : await api.createExpense(payload); onSaved(saved); }
     catch (error) { Alert.alert('Could not save', error instanceof Error ? error.message : 'Unknown error'); }
     finally { setSaving(false); }
   }
