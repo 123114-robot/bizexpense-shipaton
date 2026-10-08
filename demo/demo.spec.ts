@@ -23,17 +23,19 @@ test('records the confirmed receipt workflow', async ({ page }) => {
 
   await expect(page.getByText('Review OCR result')).toBeVisible();
   await expect(page.getByText('OCR confidence: 94%', { exact: false })).toBeVisible();
+  await expect(page.getByText('Check low-confidence fields: Invoice number (64%).', { exact: true })).toBeVisible();
   const fields = page.locator('input');
   await expect(fields.nth(0)).toHaveValue('Harbour Café');
-  await expect(fields.nth(2)).toHaveValue('27.18');
-  await expect(fields.nth(3)).toHaveValue('2.72');
-  await expect(fields.nth(4)).toHaveValue('29.9');
+  await expect(fields.nth(1)).toHaveValue('DEMO-302');
+  await expect(fields.nth(3)).toHaveValue('27.18');
+  await expect(fields.nth(4)).toHaveValue('2.72');
+  await expect(fields.nth(5)).toHaveValue('29.9');
 
   // OCR is still a draft here, so Dashboard KPIs must remain unchanged.
   await expect(page.getByText('$159.50', { exact: true }).first()).toBeVisible();
   await pause(page, 2_000);
 
-  await fields.nth(5).fill('Team lunch receipt');
+  await fields.nth(6).fill('Team lunch receipt');
   await page.getByText('Meals', { exact: true }).click();
   await pause(page, 1_000);
   await page.getByText('Confirm expense', { exact: true }).click();

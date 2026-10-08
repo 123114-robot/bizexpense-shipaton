@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
 $mobileRoot = Join-Path $repositoryRoot 'mobile'
 $serverProcess = $null
+$serverListenerProcessId = $null
 
 try {
     try {
@@ -14,11 +15,10 @@ try {
             -RedirectStandardOutput (Join-Path $PSScriptRoot 'server-output.log') `
             -RedirectStandardError (Join-Path $PSScriptRoot 'server-error.log')
 
-        # The first Expo Web request performs the initial Metro bundle. Give that
-        # request time to finish instead of repeatedly cancelling it and starting
-        # overlapping bundles.
+        # Cold Metro startup may take well over six seconds before a socket exists.
+        # Poll for up to three minutes, then allow the first real request to bundle.
         $ready = $false
-        for ($attempt = 0; $attempt -lt 3; $attempt++) {
+        for ($attempt = 0; $attempt -lt 90; $attempt++) {
             Start-Sleep -Seconds 2
             try {
                 Invoke-WebRequest -UseBasicParsing 'http://127.0.0.1:8081' -TimeoutSec 180 | Out-Null
@@ -28,7 +28,9 @@ try {
                 if ($serverProcess.HasExited) { throw 'Expo Web stopped before becoming ready.' }
             }
         }
-        if (-not $ready) { throw 'Expo Web did not become ready after three full bundle attempts.' }
+        if (-not $ready) { throw 'Expo Web did not become ready within three minutes.' }
+        $serverListenerProcessId = Get-NetTCPConnection -LocalPort 8081 -State Listen -ErrorAction SilentlyContinue |
+            Select-Object -First 1 -ExpandProperty OwningProcess
     }
 
     Push-Location $PSScriptRoot
@@ -39,7 +41,10 @@ try {
         Pop-Location
     }
 } finally {
+    if ($serverListenerProcessId) {
+        Stop-Process -Id $serverListenerProcessId -Force -ErrorAction SilentlyContinue
+    }
     if ($serverProcess -and -not $serverProcess.HasExited) {
-        Stop-Process -Id $serverProcess.Id
+        Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
     }
 }
