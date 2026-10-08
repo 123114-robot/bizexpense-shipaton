@@ -1,8 +1,10 @@
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { authApi, AuthUser, DEMO_MODE } from '@/lib/api';
-import { loadStoredToken, storeToken } from '@/lib/auth-storage';
-import { onUnauthorized, setAccessToken } from '@/lib/session-token';
+import { loadStoredSession, storeSession } from '@/lib/auth-storage';
+import { configureSessionPersistence, getRefreshToken, onUnauthorized, replaceSessionTokens, setSessionTokens } from '@/lib/session-token';
+
+configureSessionPersistence(storeSession);
 
 type AuthValue = {
   user: AuthUser | null;
@@ -21,9 +23,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState<string | null>(null);
 
   const logout = useCallback(async () => {
-    setAccessToken(null);
-    await storeToken(null);
-    setUser(null);
+    const refreshToken = getRefreshToken();
+    try {
+      if (refreshToken) await authApi.logout(refreshToken);
+    } catch {
+      // Local sign-out must still succeed when the server is unavailable.
+    } finally {
+      await replaceSessionTokens(null, null);
+      setUser(null);
+    }
   }, []);
 
   useEffect(() => onUnauthorized(() => { void logout(); }), [logout]);
@@ -32,9 +40,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (DEMO_MODE) return;
     void (async () => {
       try {
-        const token = await loadStoredToken();
-        if (!token) return;
-        setAccessToken(token);
+        const session = await loadStoredSession();
+        if (!session.access) return;
+        setSessionTokens(session.access, session.refresh);
         setUser(await authApi.me());
       } catch {
         await logout();
@@ -44,13 +52,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     })();
   }, [logout]);
 
-  const acceptAuth = useCallback(async (operation: Promise<{ access_token: string; user: AuthUser }>) => {
+  const acceptAuth = useCallback(async (operation: Promise<{ access_token: string; refresh_token: string; user: AuthUser }>) => {
     setLoading(true);
     setError(null);
     try {
       const response = await operation;
-      setAccessToken(response.access_token);
-      await storeToken(response.access_token);
+      await replaceSessionTokens(response.access_token, response.refresh_token);
       setUser(response.user);
       return true;
     } catch (cause) {

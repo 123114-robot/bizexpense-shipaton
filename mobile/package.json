@@ -3,19 +3,22 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@expo/ui": "~57.0.20",
-    "expo": "~57.0.25",
+    "@expo/ui": "~57.0.22",
+    "expo": "~57.0.27",
     "expo-constants": "~57.0.19",
     "expo-dev-client": "~57.0.19",
     "expo-device": "~57.0.2",
+    "expo-document-picker": "~57.0.3",
+    "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
     "expo-glass-effect": "~57.0.4",
     "expo-image": "~57.0.5",
     "expo-image-picker": "~57.0.20",
-    "expo-linking": "~57.0.11",
+    "expo-linking": "~57.0.12",
     "expo-network": "~57.0.2",
-    "expo-router": "~57.0.23",
+    "expo-router": "~57.0.25",
     "expo-secure-store": "~57.0.4",
+    "expo-sharing": "~57.0.22",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
@@ -50,7 +53,8 @@
     "test": "vitest run",
     "config:check": "node ./scripts/check-config.mjs",
     "validate": "npm run config:check && tsc --noEmit && npm test && npm run lint",
-    "export:web": "expo export --platform web"
+    "export:web": "expo export --platform web",
+    "export:all": "expo export --platform all"
   },
   "private": true
 }
